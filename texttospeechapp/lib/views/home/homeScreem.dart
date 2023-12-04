@@ -1,7 +1,11 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:texttospeechapp/colors/colors.dart';
+import 'package:texttospeechapp/views/common_widgets/colorProvider.dart';
+import 'package:texttospeechapp/views/common_widgets/commonWidgets.dart';
 import 'package:texttospeechapp/views/history/historyScreen.dart';
 import 'package:texttospeechapp/views/settings/settingsScreen.dart';
 
@@ -13,11 +17,16 @@ class homeScreenWidget extends StatefulWidget {
 }
 
 class _homeScreenWidgetState extends State<homeScreenWidget> {
+  String selectedLanguage = 'English'; // Default selected language
+  String recognizedText = '';
+  bool isListening = false;
   @override
   Widget build(BuildContext context) {
+    var fontSizeProvider = Provider.of<FontSizeProvider>(context);
     stt.SpeechToText speech = stt.SpeechToText();
-    String selectedLanguage = 'English'; // Default selected language
-    List recognizedText = [];
+
+    var fontColorProvider = Provider.of<FontColorProvider>(context);
+    // var fontColorProvider = Provider.of<FontColorProvider>(context);
 
     // List of available languages
     List<Map<String, dynamic>> languages = [
@@ -44,8 +53,7 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
           speech.listen(
             onResult: (val) {
               setState(() {
-                recognizedText =
-                    val.recognizedWords as List; // Update recognized text
+                recognizedText = val.recognizedWords; // Update recognized text
                 print('onResult: $val');
               });
             },
@@ -68,8 +76,8 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                   color: Colors.white,
                 ))
           ],
-          toolbarHeight: 80,
-          backgroundColor: const Color.fromARGB(255, 40, 58, 120),
+          toolbarHeight: 70,
+          backgroundColor: primaryBackground,
           title: const Text(
             'Speech to Text',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -80,7 +88,7 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(10),
                 child: Container(
                   decoration: BoxDecoration(
                       color: Colors.white,
@@ -126,7 +134,7 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               // Button for speech recognition
               Expanded(
                 flex: 2,
@@ -143,7 +151,12 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                     ),
                     itemBuilder: (BuildContext context, int index) {
                       return ListTile(
-                        title: Text(languages[index]['name']),
+                        title: Text(
+                          languages[index]['name'],
+                          style: TextStyle(
+                              fontSize: fontSizeProvider.fontSize,
+                              color: fontColorProvider.selectedColor),
+                        ),
                         onTap: () {
                           setState(() {
                             selectedLanguage = languages[index]['name'];
@@ -176,7 +189,7 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                         const Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text(
-                            'Click to Speak',
+                            'Tap to Speak',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -184,16 +197,47 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                           ),
                         ),
                         SizedBox(
-                          height: 80,
-                          width: 80,
-                          child: CircleAvatar(
-                            backgroundColor:
-                                const Color.fromARGB(255, 40, 58, 120),
-                            child: IconButton(
-                              onPressed: startListening,
-                              icon: const Icon(
-                                Icons.mic,
-                                color: Colors.white,
+                          height: 100,
+                          width: 100,
+                          child: AvatarGlow(
+                            endRadius: 75,
+                            animate: isListening,
+                            duration: const Duration(milliseconds: 2000),
+                            glowColor: primaryBackground,
+                            repeat: true,
+                            repeatPauseDuration:
+                                const Duration(milliseconds: 100),
+                            showTwoGlows: true,
+                            child: GestureDetector(
+                              onTap: startListening,
+                              onTapDown: (details) {
+                                setState(() {
+                                  isListening = true;
+                                });
+                              },
+                              onTapUp: (details) {
+                                setState(() {
+                                  isListening = false;
+                                });
+                              },
+                              child: const SizedBox(
+                                height: 80,
+                                width: 80,
+                                child: CircleAvatar(
+                                  backgroundColor: primaryBackground,
+                                  child: Icon(
+                                    Icons.mic,
+                                    color: Colors.white,
+                                    size: 35,
+                                  ),
+                                  // IconButton(
+                                  //   onPressed: startListening,
+                                  //   icon: const Icon(
+                                  //     Icons.mic,
+                                  //     color: Colors.white,
+                                  //   ),
+                                  // ),
+                                ),
                               ),
                             ),
                           ),

@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:texttospeechapp/navbarScreen.dart';
+import 'package:texttospeechapp/views/common_widgets/colorProvider.dart';
+import 'package:texttospeechapp/views/common_widgets/commonWidgets.dart';
+import 'package:texttospeechapp/views/home/homeScreem.dart';
 import 'package:texttospeechapp/views/home/splashScreen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const MyApp(),
+  );
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Color.fromARGB(255, 40, 58, 120),
       statusBarIconBrightness: Brightness.light));
@@ -16,13 +22,27 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => FontColorProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => FontSizeProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const splashScreenWidget(),
+          '/home': (context) => const homeScreenWidget()
+        },
       ),
-      home: const splashScreenWidget(),
     );
   }
 }
