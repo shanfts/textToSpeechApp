@@ -1,9 +1,13 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:texttospeechapp/boxes/boxes.dart';
 import 'package:texttospeechapp/colors/colors.dart';
+import 'package:texttospeechapp/models/speech_models.dart';
 import 'package:texttospeechapp/views/common_widgets/colorProvider.dart';
 import 'package:texttospeechapp/views/common_widgets/commonWidgets.dart';
 import 'package:texttospeechapp/views/history/historyScreen.dart';
@@ -20,48 +24,58 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
   String selectedLanguage = 'English'; // Default selected language
   String recognizedText = '';
   bool isListening = false;
+  List<String> recognizedTextList = [];
+  stt.SpeechToText speech = stt.SpeechToText();
+
+// List of available languages
+  List<Map<String, dynamic>> languages = [
+    {'name': 'English', 'localeId': 'en_US', 'flag': '🇺🇸'},
+    {'name': 'Arabic', 'localeId': 'ar', 'flag': '🇸🇦'},
+    {'name': 'Urdu', 'localeId': 'ur_PK', 'flag': '🇵🇰'},
+    {'name': 'Russian', 'localeId': 'ru_RU', 'flag': '🇷🇺'},
+    {'name': 'Chinese', 'localeId': 'zh_CN', 'flag': '🇨🇳'},
+    {'name': 'Hindi', 'localeId': 'hi_IN', 'flag': '🇮🇳'}, // Added Hindi
+  ];
+
+  // Function to start speech recognition
+  void startListening() async {
+    if (!speech.isListening) {
+      bool available = await speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+
+      if (available) {
+        // Set the selected language
+        String selectedLocaleId = languages
+            .firstWhere((lang) => lang['name'] == selectedLanguage)['localeId'];
+
+        speech.listen(
+          onResult: (val) {
+            setState(() {
+              if (val.finalResult) {
+                recognizedText = val.recognizedWords; // Update recognized text
+                recognizedTextList.add(recognizedText);
+                final data = speechModel(recognizedSpeeches: recognizedText);
+                final box = Boxes.getData();
+
+                box.add(data);
+                data.save();
+                print(box);
+              }
+              print('onResult: $val');
+            });
+          },
+          localeId: selectedLocaleId,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    stt.SpeechToText speech = stt.SpeechToText();
-
     var fontColorProvider = Provider.of<FontColorProvider>(context);
-    // var fontColorProvider = Provider.of<FontColorProvider>(context);
-
-    // List of available languages
-    List<Map<String, dynamic>> languages = [
-      {'name': 'English', 'localeId': 'en_US', 'flag': '🇺🇸'},
-      {'name': 'Arabic', 'localeId': 'ar', 'flag': '🇸🇦'},
-      {'name': 'Urdu', 'localeId': 'ur_PK', 'flag': '🇵🇰'},
-      {'name': 'Russian', 'localeId': 'ru_RU', 'flag': '🇷🇺'},
-      {'name': 'Chinese', 'localeId': 'zh_CN', 'flag': '🇨🇳'},
-    ];
-
-    // Function to start speech recognition
-    void startListening() async {
-      if (!speech.isListening) {
-        bool available = await speech.initialize(
-          onStatus: (val) => print('onStatus: $val'),
-          onError: (val) => print('onError: $val'),
-        );
-
-        if (available) {
-          // Set the selected language
-          String selectedLocaleId = languages.firstWhere(
-              (lang) => lang['name'] == selectedLanguage)['localeId'];
-
-          speech.listen(
-            onResult: (val) {
-              setState(() {
-                recognizedText = val.recognizedWords; // Update recognized text
-                print('onResult: $val');
-              });
-            },
-            localeId: selectedLocaleId,
-          );
-        }
-      }
-    }
 
     return SafeArea(
       child: Scaffold(
@@ -138,32 +152,44 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
               // Button for speech recognition
               Expanded(
                 flex: 2,
-                child: Container(
-                  color: const Color.fromARGB(255, 226, 230, 247),
-                  child: ListView.separated(
-                    itemCount: languages.length,
-                    separatorBuilder: (BuildContext context, int index) =>
-                        const Divider(
-                      indent: 10,
-                      endIndent: 10,
-                      thickness: 0.8,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                    ),
-                    itemBuilder: (BuildContext context, int index) {
-                      return ListTile(
-                        title: Text(
-                          languages[index]['name'],
-                          style: TextStyle(
-                              fontSize: fontSizeProvider.fontSize,
-                              color: fontColorProvider.selectedColor),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            selectedLanguage = languages[index]['name'];
-                          });
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 226, 230, 247),
+                        borderRadius: BorderRadius.circular(15)),
+                    child: Scrollbar(
+                      trackVisibility: true,
+                      radius: const Radius.circular(15),
+                      child: ValueListenableBuilder<Box<speechModel>>(
+                        valueListenable: Boxes.getData().listenable(),
+                        builder: (context, box, _) {
+                          var data = box.values.toList().cast<speechModel>();
+                          return ListView.separated(
+                            itemCount: box.length,
+                            separatorBuilder:
+                                (BuildContext context, int index) =>
+                                    const Divider(
+                              indent: 10,
+                              height: 1,
+                              endIndent: 10,
+                              thickness: 0.8,
+                              color: primaryBackground,
+                            ),
+                            itemBuilder: (BuildContext context, int index) {
+                              return ListTile(
+                                title: Text(
+                                  data[index].recognizedSpeeches.toString(),
+                                  style: TextStyle(
+                                      fontSize: fontSizeProvider.fontSize,
+                                      color: fontColorProvider.selectedColor),
+                                ),
+                              );
+                            },
+                          );
                         },
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
