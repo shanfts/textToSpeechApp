@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:texttospeechapp/boxes/boxes.dart';
@@ -36,8 +37,11 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
     {'name': 'Chinese', 'localeId': 'zh_CN', 'flag': '🇨🇳'},
     {'name': 'Hindi', 'localeId': 'hi_IN', 'flag': '🇮🇳'}, // Added Hindi
   ];
+// Import the intl package for date formatting
 
-  // Function to start speech recognition
+// ...
+
+// Function to start speech recognition
   void startListening() async {
     if (!speech.isListening) {
       bool available = await speech.initialize(
@@ -54,8 +58,33 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
           onResult: (val) {
             setState(() {
               if (val.finalResult) {
-                recognizedText = val.recognizedWords; // Update recognized text
-                recognizedTextList.add(recognizedText);
+                String recognizedText =
+                    val.recognizedWords; // Update recognized text
+
+                // Get current date and time and format them
+                String currentDate =
+                    DateFormat('yyyy-MM-dd').format(DateTime.now());
+                String currentTime =
+                    DateFormat('HH:mm:ss').format(DateTime.now());
+
+                // Create formatted date and time strings with adjusted font size
+                String dateTimeText =
+                    '$currentDate\n$currentTime'; // Date and time
+
+                TextStyle dateStyle =
+                    const TextStyle(fontSize: 14); // Date and time font size
+                TextStyle textBelowStyle =
+                    const TextStyle(fontSize: 16); // Recognized text font size
+
+                recognizedTextList.add(
+                  Column(
+                    children: [
+                      Text(dateTimeText, style: dateStyle),
+                      Text(recognizedText, style: textBelowStyle),
+                    ],
+                  ) as String,
+                );
+
                 final data = speechModel(recognizedSpeeches: recognizedText);
                 final box = Boxes.getData();
 

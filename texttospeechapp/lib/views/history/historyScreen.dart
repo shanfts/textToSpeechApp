@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'package:texttospeechapp/boxes/boxes.dart';
@@ -169,9 +170,47 @@ class historyScreenWidget extends StatelessWidget {
                                             blurRadius: 8)
                                       ]),
                                   child: ListTile(
-                                      trailing: IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.more_vert)),
+                                      trailing: PopupMenuButton<String>(
+                                        surfaceTintColor: Colors.white,
+                                        shape: Border.all(
+                                            color: primaryBackground),
+                                        onSelected: (String value) {
+                                          if (value == 'delete') {
+                                            delete(data[index]);
+                                          } else if (value == 'share') {
+                                            String content = data[index]
+                                                .recognizedSpeeches
+                                                .toString();
+
+                                            _shareContent(context, content);
+                                          }
+                                        },
+                                        itemBuilder: (BuildContext context) =>
+                                            <PopupMenuEntry<String>>[
+                                          const PopupMenuItem<String>(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete),
+                                                Text('Delete'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem<String>(
+                                            value: 'share',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.share),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Text('Share'),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                        icon: const Icon(Icons.more_vert),
+                                      ),
                                       title: Text(
                                         data[index]
                                             .recognizedSpeeches
@@ -193,5 +232,24 @@ class historyScreenWidget extends StatelessWidget {
         ),
       ),
     ));
+  }
+}
+
+void delete(speechModel speechModel) async {
+  await speechModel.delete();
+}
+
+void _shareContent(BuildContext context, String content) {
+  if (content.isNotEmpty) {
+    Share.share(content).then((value) {
+      // Share completed
+      // Add any post-sharing logic here
+    }).catchError((error) {
+      // Handle sharing error
+      // Display error message or perform fallback action
+    });
+  } else {
+    // Handle empty content case
+    // Display a message or perform an action if there's no content to share
   }
 }
