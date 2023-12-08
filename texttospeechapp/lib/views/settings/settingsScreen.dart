@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texttospeechapp/colors/colors.dart';
+import 'package:texttospeechapp/models/language_model.dart';
 import 'package:texttospeechapp/views/common_widgets/colorProvider.dart';
 
 import '../common_widgets/commonWidgets.dart';
@@ -19,6 +20,8 @@ class _settingScreenWidgetState extends State<settingScreenWidget> {
   Widget build(BuildContext context) {
     var fontColorProvider = Provider.of<FontColorProvider>(context);
     var fontSizeProvider = Provider.of<FontSizeProvider>(context);
+
+    var languageProvider = Provider.of<LanguageProvider>(context);
     String selectedLanguage = 'English';
     // Initial font size
     List<Color> colors = [
@@ -39,15 +42,6 @@ class _settingScreenWidgetState extends State<settingScreenWidget> {
         child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.history,
-                size: 30,
-                color: Colors.white,
-              ))
-        ],
         toolbarHeight: 80,
         backgroundColor: primaryBackground,
         title: const Text(
@@ -89,7 +83,7 @@ class _settingScreenWidgetState extends State<settingScreenWidget> {
                       borderRadius: BorderRadius.circular(15),
                       decoration: const InputDecoration(
                           enabled: false, disabledBorder: InputBorder.none),
-                      value: selectedLanguage,
+                      value: languageProvider.selectedLanguage,
                       iconSize: 35,
                       items: languages.map((lang) {
                         return DropdownMenuItem(
@@ -110,9 +104,7 @@ class _settingScreenWidgetState extends State<settingScreenWidget> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          selectedLanguage = value.toString();
-                        });
+                        languageProvider.setSelectedLanguage(value.toString());
                       },
                     ),
                   ],

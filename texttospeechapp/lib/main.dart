@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:texttospeechapp/models/language_model.dart';
+import 'package:texttospeechapp/models/sorting_model.dart';
 import 'package:texttospeechapp/models/speech_models.dart';
 import 'package:texttospeechapp/models/switch_model.dart';
 import 'package:texttospeechapp/navbarScreen.dart';
@@ -39,7 +41,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => FontSizeProvider(),
         ),
-        ChangeNotifierProvider(create: (context) => ViewMode())
+        ChangeNotifierProvider(create: (context) => ViewMode()),
+        ChangeNotifierProvider(
+          create: (context) => SortOptionNotifier(),
+        ),
+        ChangeNotifierProvider(create: (context) => LanguageProvider()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

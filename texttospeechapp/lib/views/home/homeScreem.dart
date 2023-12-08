@@ -8,6 +8,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:texttospeechapp/boxes/boxes.dart';
 import 'package:texttospeechapp/colors/colors.dart';
+import 'package:texttospeechapp/models/language_model.dart';
 import 'package:texttospeechapp/models/speech_models.dart';
 import 'package:texttospeechapp/views/common_widgets/colorProvider.dart';
 import 'package:texttospeechapp/views/common_widgets/commonWidgets.dart';
@@ -22,7 +23,8 @@ class homeScreenWidget extends StatefulWidget {
 }
 
 class _homeScreenWidgetState extends State<homeScreenWidget> {
-  String selectedLanguage = 'English'; // Default selected language
+  String selectedLanguage = 'English';
+  // Default selected language
   String recognizedText = '';
   bool isListening = false;
   List<String> recognizedTextList = [];
@@ -37,88 +39,65 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
     {'name': 'Chinese', 'localeId': 'zh_CN', 'flag': '🇨🇳'},
     {'name': 'Hindi', 'localeId': 'hi_IN', 'flag': '🇮🇳'}, // Added Hindi
   ];
-// Import the intl package for date formatting
-
-// ...
-
-// Function to start speech recognition
-  void startListening() async {
-    if (!speech.isListening) {
-      bool available = await speech.initialize(
-        onStatus: (val) => print('onStatus: $val'),
-        onError: (val) => print('onError: $val'),
-      );
-
-      if (available) {
-        // Set the selected language
-        String selectedLocaleId = languages
-            .firstWhere((lang) => lang['name'] == selectedLanguage)['localeId'];
-
-        speech.listen(
-          onResult: (val) {
-            setState(() {
-              if (val.finalResult) {
-                String recognizedText =
-                    val.recognizedWords; // Update recognized text
-
-                // Get current date and time and format them
-                String currentDate =
-                    DateFormat('yyyy-MM-dd').format(DateTime.now());
-                String currentTime =
-                    DateFormat('HH:mm:ss').format(DateTime.now());
-
-                // Create formatted date and time strings with adjusted font size
-                String dateTimeText =
-                    '$currentDate\n$currentTime'; // Date and time
-
-                TextStyle dateStyle =
-                    const TextStyle(fontSize: 14); // Date and time font size
-                TextStyle textBelowStyle =
-                    const TextStyle(fontSize: 16); // Recognized text font size
-
-                recognizedTextList.add(
-                  Column(
-                    children: [
-                      Text(dateTimeText, style: dateStyle),
-                      Text(recognizedText, style: textBelowStyle),
-                    ],
-                  ) as String,
-                );
-
-                final data = speechModel(recognizedSpeeches: recognizedText);
-                final box = Boxes.getData();
-
-                box.add(data);
-                data.save();
-                print(box);
-              }
-              print('onResult: $val');
-            });
-          },
-          localeId: selectedLocaleId,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    var languageProvider = Provider.of<LanguageProvider>(context);
     var fontSizeProvider = Provider.of<FontSizeProvider>(context);
     var fontColorProvider = Provider.of<FontColorProvider>(context);
+
+    void startListening() async {
+      if (!speech.isListening) {
+        bool available = await speech.initialize(
+          onStatus: (val) => print('onStatus: $val'),
+          onError: (val) => print('onError: $val'),
+        );
+
+        if (available) {
+          // Set the selected language
+          String selectedLocaleId = languages.firstWhere((lang) =>
+              lang['name'] == languageProvider.selectedLanguage)['localeId'];
+
+          speech.listen(
+            onResult: (val) {
+              setState(() {
+                if (val.finalResult) {
+                  String recognizedText =
+                      val.recognizedWords; // Update recognized text
+
+                  // Get current date and time and format them
+                  String currentDate =
+                      DateFormat('yyyy-MM-dd').format(DateTime.now());
+                  String currentTime =
+                      DateFormat('HH:mm:ss').format(DateTime.now());
+
+                  // Create formatted date and time strings
+                  String dateTimeText =
+                      '$currentDate $currentTime'; // Date and time above text
+                  String fullText =
+                      '$dateTimeText\n$recognizedText'; // Text below date and time
+
+                  recognizedTextList.add(fullText);
+
+                  final data = speechModel(recognizedSpeeches: fullText);
+                  final box = Boxes.getData();
+
+                  box.add(data);
+                  data.save();
+                  print(box);
+                }
+                print('onResult: $val');
+              });
+            },
+            localeId: selectedLocaleId,
+          );
+        }
+      }
+    }
 
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          actions: [
-            IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.history,
-                  size: 30,
-                  color: Colors.white,
-                ))
-          ],
           toolbarHeight: 70,
           backgroundColor: primaryBackground,
           title: const Text(
@@ -144,35 +123,40 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                       ]),
                   child: Padding(
                     padding: const EdgeInsets.only(left: 15, right: 25),
-                    child: DropdownButtonFormField(
-                      borderRadius: BorderRadius.circular(15),
-                      decoration: const InputDecoration(
-                          enabled: false, disabledBorder: InputBorder.none),
-                      value: selectedLanguage,
-                      iconSize: 35,
-                      items: languages.map((lang) {
-                        return DropdownMenuItem(
-                          value: lang['name'],
-                          child: Row(
-                            children: [
-                              Text(
-                                lang['flag'],
-                                style: const TextStyle(fontSize: 25),
-                              ), // Display flag
-                              const SizedBox(width: 8),
-                              Text(
-                                lang['name'],
-                                style: const TextStyle(fontSize: 20),
-                              ), // Display language name
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedLanguage = value.toString();
-                        });
-                      },
+                    child: ChangeNotifierProvider(
+                      create: (_) => LanguageProvider(),
+                      child: Consumer<LanguageProvider>(
+                        builder: (context, value, child) =>
+                            DropdownButtonFormField(
+                          borderRadius: BorderRadius.circular(15),
+                          decoration: const InputDecoration(
+                              enabled: false, disabledBorder: InputBorder.none),
+                          value: languageProvider.selectedLanguage,
+                          iconSize: 35,
+                          items: languages.map((lang) {
+                            return DropdownMenuItem(
+                              value: lang['name'],
+                              child: Row(
+                                children: [
+                                  Text(
+                                    lang['flag'],
+                                    style: const TextStyle(fontSize: 25),
+                                  ), // Display flag
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    lang['name'],
+                                    style: const TextStyle(fontSize: 20),
+                                  ), // Display language name
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            languageProvider
+                                .setSelectedLanguage(value.toString());
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
