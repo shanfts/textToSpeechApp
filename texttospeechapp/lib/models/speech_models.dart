@@ -6,5 +6,8 @@ class speechModel extends HiveObject {
   @HiveField(0)
   String recognizedSpeeches;
 
-  speechModel({required this.recognizedSpeeches});
+  @HiveField(1)
+  String dateAndTime;
+
+  speechModel({required this.recognizedSpeeches, required this.dateAndTime});
 }

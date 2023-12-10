@@ -66,19 +66,21 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
 
                   // Get current date and time and format them
                   String currentDate =
-                      DateFormat('yyyy-MM-dd').format(DateTime.now());
+                      DateFormat('dd-MM-yyyy').format(DateTime.now());
                   String currentTime =
                       DateFormat('HH:mm:ss').format(DateTime.now());
 
                   // Create formatted date and time strings
                   String dateTimeText =
-                      '$currentDate $currentTime'; // Date and time above text
-                  String fullText =
-                      '$dateTimeText\n$recognizedText'; // Text below date and time
+                      'Date: $currentDate $currentTime'; // Date and time above text
+                  // String fullText =
+                  //     '$dateTimeText\n$recognizedText'; // Text below date and time
 
-                  recognizedTextList.add(fullText);
+                  recognizedTextList.add(recognizedText);
 
-                  final data = speechModel(recognizedSpeeches: fullText);
+                  final data = speechModel(
+                      recognizedSpeeches: recognizedText,
+                      dateAndTime: dateTimeText);
                   final box = Boxes.getData();
 
                   box.add(data);
@@ -190,14 +192,35 @@ class _homeScreenWidgetState extends State<homeScreenWidget> {
                               color: primaryBackground,
                             ),
                             itemBuilder: (BuildContext context, int index) {
-                              return ListTile(
-                                title: Text(
-                                  data[index].recognizedSpeeches.toString(),
-                                  style: TextStyle(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: fontColorProvider.selectedColor),
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data[index].dateAndTime.toString(),
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black),
+                                    ),
+                                    Text(
+                                      data[index].recognizedSpeeches.toString(),
+                                      style: TextStyle(
+                                        color: fontColorProvider.selectedColor,
+                                        fontSize: fontSizeProvider.fontSize,
+                                      ),
+                                    )
+                                  ],
                                 ),
                               );
+
+                              // ListTile(
+                              //   title: Text(
+                              //     data[index].dateAndTime.toString(),
+                              //     style: TextStyle(
+                              //         fontSize: fontSizeProvider.fontSize,
+                              //         color: fontColorProvider.selectedColor),
+                              //   ),
+                              // );
                             },
                           );
                         },

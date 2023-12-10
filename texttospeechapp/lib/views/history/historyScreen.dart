@@ -20,7 +20,6 @@ class historyScreenWidget extends StatelessWidget {
     var fontColorProvider = Provider.of<FontColorProvider>(context);
     final sortOptionNotifier = Provider.of<SortOptionNotifier>(context);
     var viewMode = Provider.of<ViewMode>(context);
-    List items = ['Ascending(A-Z)', 'Descending(Z-A)', 'Date Modified'];
     return SafeArea(
         child: Scaffold(
       backgroundColor: Colors.white,
@@ -77,7 +76,7 @@ class historyScreenWidget extends StatelessWidget {
                     ChangeNotifierProvider(
                       create: (_) => SortOptionNotifier(),
                       child: Consumer<SortOptionNotifier>(
-                        builder: (context, sortOptionNotifier, _) => Center(
+                        builder: (context, SortOptionNotifier, _) => Center(
                           child: Row(
                             children: [
                               const Text(
@@ -93,8 +92,6 @@ class historyScreenWidget extends StatelessWidget {
                                   if (newValue != null) {
                                     sortOptionNotifier
                                         .setSelectedOption(newValue);
-                                    // Perform actions based on the selected value here
-                                    // For instance, you could call a function to sort accordingly
                                   }
                                 },
                                 items: <String>[
@@ -107,32 +104,12 @@ class historyScreenWidget extends StatelessWidget {
                                     child: Text(value),
                                   );
                                 }).toList(),
-                              )
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
-                    // TextButton(
-                    //     onPressed: () {},
-                    //     child: const Row(
-                    //       children: [
-                    //         Text(
-                    //           'Sort By',
-                    //           style: TextStyle(
-                    //               color: primaryBackground,
-                    //               fontSize: 18,
-                    //               fontWeight: FontWeight.w500),
-                    //         ),
-                    //         Padding(
-                    //           padding: EdgeInsets.all(8.0),
-                    //           child: Icon(
-                    //             Icons.sort,
-                    //             color: primaryBackground,
-                    //           ),
-                    //         )
-                    //       ],
-                    //     )),
                   ],
                 )
               ],
@@ -150,6 +127,31 @@ class historyScreenWidget extends StatelessWidget {
                         valueListenable: Boxes.getData().listenable(),
                         builder: (context, box, _) {
                           var data = box.values.toList().cast<speechModel>();
+
+                          var sortedData = <speechModel>[];
+                          switch (sortOptionNotifier.selectedOption) {
+                            case 'Ascending':
+                              sortedData = box.values
+                                  .toList()
+                                  .cast<speechModel>()
+                                ..sort((a, b) => a.recognizedSpeeches
+                                    .compareTo(b.recognizedSpeeches));
+                              break;
+                            case 'Descending':
+                              sortedData =
+                                  box.values.toList().cast<speechModel>();
+                              sortedData.sort((a, b) => b.recognizedSpeeches
+                                  .compareTo(a.recognizedSpeeches));
+                              break;
+                            case 'By Date':
+                              sortedData =
+                                  box.values.toList().cast<speechModel>();
+                              break;
+                            default:
+                              sortedData =
+                                  box.values.toList().cast<speechModel>();
+                              break;
+                          }
                           return GridView.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
@@ -158,7 +160,7 @@ class historyScreenWidget extends StatelessWidget {
                               mainAxisSpacing: 8.0,
                               mainAxisExtent: 180,
                             ),
-                            itemCount: box.length,
+                            itemCount: sortedData.length,
                             itemBuilder: (BuildContext context, int index) {
                               return Padding(
                                 padding: const EdgeInsets.all(5),
@@ -215,16 +217,25 @@ class historyScreenWidget extends StatelessWidget {
                                         ],
                                         icon: const Icon(Icons.more_vert),
                                       ),
-                                      title: Text(
-                                        data[index]
+                                      subtitle: Text(
+                                        sortedData[index]
                                             .recognizedSpeeches
                                             .toString(),
-                                        maxLines: 5,
+                                        maxLines: 3,
                                         style: TextStyle(
-                                          fontSize: fontSizeProvider.fontSize,
+                                          overflow: TextOverflow.ellipsis,
                                           color:
                                               fontColorProvider.selectedColor,
-                                          overflow: TextOverflow.ellipsis,
+                                          fontSize: fontSizeProvider.fontSize,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        sortedData[index]
+                                            .dateAndTime
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black,
                                         ),
                                       )),
                                 ),
@@ -241,8 +252,33 @@ class historyScreenWidget extends StatelessWidget {
                         valueListenable: Boxes.getData().listenable(),
                         builder: (context, box, _) {
                           var data = box.values.toList().cast<speechModel>();
+
+                          var sortedData = <speechModel>[];
+                          switch (sortOptionNotifier.selectedOption) {
+                            case 'Ascending':
+                              sortedData = box.values
+                                  .toList()
+                                  .cast<speechModel>()
+                                ..sort((a, b) => a.recognizedSpeeches
+                                    .compareTo(b.recognizedSpeeches));
+                              break;
+                            case 'Descending':
+                              sortedData =
+                                  box.values.toList().cast<speechModel>();
+                              sortedData.sort((a, b) => b.recognizedSpeeches
+                                  .compareTo(a.recognizedSpeeches));
+                              break;
+                            case 'By Date':
+                              sortedData = box.values.toList().cast<
+                                  speechModel>(); // Assuming initial order is by date
+                              break;
+                            default:
+                              sortedData =
+                                  box.values.toList().cast<speechModel>();
+                              break;
+                          }
                           return ListView.builder(
-                            itemCount: box.length,
+                            itemCount: sortedData.length,
                             itemBuilder: (BuildContext context, int index) {
                               return Padding(
                                 padding: const EdgeInsets.all(10),
@@ -299,14 +335,26 @@ class historyScreenWidget extends StatelessWidget {
                                         ],
                                         icon: const Icon(Icons.more_vert),
                                       ),
-                                      title: Text(
-                                        data[index]
+                                      subtitle: Text(
+                                        sortedData[index]
                                             .recognizedSpeeches
                                             .toString(),
+                                        maxLines: 3,
                                         style: TextStyle(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: fontColorProvider
-                                                .selectedColor),
+                                          overflow: TextOverflow.ellipsis,
+                                          color:
+                                              fontColorProvider.selectedColor,
+                                          fontSize: fontSizeProvider.fontSize,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        sortedData[index]
+                                            .dateAndTime
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                        ),
                                       )),
                                 ),
                               );
@@ -341,30 +389,3 @@ void _shareContent(BuildContext context, String content) {
     // Display a message or perform an action if there's no content to share
   }
 }
-
-// class DropdownButtonWidget extends StatelessWidget {
-//   const DropdownButtonWidget({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final sortOptionNotifier = Provider.of<SortOptionNotifier>(context);
-
-//     return DropdownButton<String>(
-//       value: sortOptionNotifier.selectedOption,
-//       onChanged: (String? newValue) {
-//         if (newValue != null) {
-//           sortOptionNotifier.setSelectedOption(newValue);
-//           // Perform actions based on the selected value here
-//           // For instance, you could call a function to sort accordingly
-//         }
-//       },
-//       items: <String>['Ascending', 'Descending', 'By Date']
-//           .map<DropdownMenuItem<String>>((String value) {
-//         return DropdownMenuItem<String>(
-//           value: value,
-//           child: Text(value),
-//         );
-//       }).toList(),
-//     );
-//   }
-// }

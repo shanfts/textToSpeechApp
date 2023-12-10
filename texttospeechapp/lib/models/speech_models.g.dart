@@ -18,15 +18,18 @@ class speechModelAdapter extends TypeAdapter<speechModel> {
     };
     return speechModel(
       recognizedSpeeches: fields[0] as String,
+      dateAndTime: fields[1] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, speechModel obj) {
     writer
-      ..writeByte(1)
+      ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.recognizedSpeeches);
+      ..write(obj.recognizedSpeeches)
+      ..writeByte(1)
+      ..write(obj.dateAndTime);
   }
 
   @override
